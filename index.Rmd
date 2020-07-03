@@ -1,0 +1,149 @@
+---
+title: "Vulnerability in Aberdeen"
+
+output:
+  flexdashboard::flex_dashboard:
+    orientation: rows
+    vertical_layout: scroll
+---
+
+```{r setup, include=FALSE}
+library(here)
+library(tidyverse)
+library(sf)
+library(flexdashboard)
+library(mapview)
+library(gt)
+library(cowplot)
+library(plotly)
+
+theme_set(theme_cowplot())
+```
+
+
+```{r}
+#load data and shapefiles 
+
+simd_zones <- read_csv(here("data", "SIMD+2020v2+-+datazone+lookup.csv"))
+
+simd_indicators <- read_csv(here("data", "SIMD2020v2_indicators.csv"))
+
+datazone_sf <- st_read(here("data", "sc_dz_11.shp"), quiet = T)
+```
+
+```{r}
+#join SIMD files
+#remove "%" and "*" and make numeric
+
+simd <- full_join(simd_indicators, simd_zones, by = c("Data_Zone" = "DZ"))
+
+simd <- 
+simd %>%
+  mutate(across(everything(), ~ str_remove_all(., "%")),
+         across(everything(), ~ str_remove_all(., "\\*")),
+         across(Total_population:nocentralheat_rate, ~ as.numeric(.)),
+         across(SIMD2020v2_Rank:Population, ~ as.numeric(.)))
+```
+
+
+```{r}
+#select Aberdeen City areas' data 
+#join to shapefile
+
+aberdeen <-
+  simd %>%
+  filter(Council_area == "Aberdeen City")
+
+aberdeen_data_zones <- pull(aberdeen, Data_Zone)
+
+aberdeen_sf <- filter(datazone_sf, DataZone %in% aberdeen_data_zones)
+
+aberdeen_sf <-
+  merge(aberdeen_sf, aberdeen, by.x = "DataZone", by.y = "Data_Zone")
+
+aberdeen_sf <-
+aberdeen_sf %>% mutate(pop_per_km2 = TotPop2011/StdAreaKm2)
+
+```
+
+
+```{r}
+# p <-
+#   ggplot(data = aberdeen, aes(SIMD2020v2_Vigintile, LBWT, label = DZname)) +
+#   geom_jitter(aes(color = IZname)) +
+#   geom_smooth(method = "lm") +
+#   #geom_hline(yintercept = 100) +
+#   theme(legend.position = 'none') +
+#   scale_fill_brewer(palette = "PiYG")
+# 
+# ggplotly(p, tooltip = c("label"))
+```
+
+
+Areas with worst health
+=====================================
+
+Row
+-------------------------------------
+
+###
+
+```{r}
+#filter(aberdeen_sf, !(DataZone %in% c("S01006563", "S01006587", "S01006655"))) %>% 
+
+aberdeen_sf %>%
+  mapview(
+    map.types = "OpenStreetMap",
+    zcol = "SIMD2020_Health_Domain_Rank", 
+    label = aberdeen_sf$Name,
+    layer.name = "SIMD Health Rank",
+    alpha.regions = 0.8
+    )
+```
+
+
+###
+
+```{r}
+#
+
+aberdeen %>%
+  select(Data_Zone, Intermediate_Zone, Total_population, SIMD2020_Health_Domain_Rank, SIMD2020v2_Decile) %>%
+   filter(SIMD2020_Health_Domain_Rank < 2000) %>%
+   arrange(SIMD2020_Health_Domain_Rank) %>%
+  gt() %>%
+  tab_header(
+    title = "Areas with worst health", 
+    subtitle = "Data zones with SIMD Health Domain Rank < 2000") %>%
+  cols_label(
+    Data_Zone = "Data Zone",
+    Intermediate_Zone = "Area", 
+    Total_population = "Population", 
+    SIMD2020_Health_Domain_Rank = "Health Rank",
+    SIMD2020v2_Decile = "SIMD Decile")  %>%
+  tab_options(container.height = 400)
+```
+
+
+Sources
+=====================================
+
+Row
+-------------------------------------
+###
+
+Scottish Index of Multiple Deprivation 2020
+https://www.gov.scot/collections/scottish-index-of-multiple-deprivation-2020/
+
+Scottish Index of Multiple Deprivation 2020 technical notes
+https://www2.gov.scot/resource/0050/00504822.pdf
+
+Data from 
+https://www.gov.scot/publications/scottish-index-of-multiple-deprivation-2020v2-indicator-data/
+https://www.gov.scot/publications/scottish-index-of-multiple-deprivation-2020v2-data-zone-look-up/
+
+Map shapefiles from https://data.gov.uk/dataset/ab9f1f20-3b7f-4efa-9bd2-239acf63b540/data-zone-boundaries-2011
+
+Code at https://github.com/JessButler/simd
+
+
