@@ -125,6 +125,50 @@ aberdeen %>%
 ```
 
 
+Areas with worst housing
+=====================================
+
+Row
+-------------------------------------
+
+###
+
+```{r}
+aberdeen_sf %>%
+  mapview(
+    map.types = "OpenStreetMap",
+    zcol = "SIMD2020_Housing_Domain_Rank", 
+    label = aberdeen_sf$Name,
+    layer.name = "SIMD Housing Rank",
+    alpha.regions = 0.8
+    )
+```
+
+
+###
+
+```{r}
+#
+
+aberdeen %>%
+  select(Data_Zone, Intermediate_Zone, Total_population, SIMD2020_Housing_Domain_Rank, SIMD2020v2_Decile) %>%
+   filter(SIMD2020_Housing_Domain_Rank < 500) %>%
+   arrange(SIMD2020_Housing_Domain_Rank) %>%
+  gt() %>%
+  tab_header(
+    title = "Areas with worst housing", 
+    subtitle = "Data zones with SIMD Housing Domain Rank < 500") %>%
+  cols_label(
+    Data_Zone = "Data Zone",
+    Intermediate_Zone = "Area", 
+    Total_population = "Population", 
+    SIMD2020_Housing_Domain_Rank = "Housing Rank",
+    SIMD2020v2_Decile = "SIMD Decile")  %>%
+  tab_options(container.height = 400)
+```
+
+
+
 Sources
 =====================================
 
