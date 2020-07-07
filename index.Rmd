@@ -1,5 +1,5 @@
 ---
-title: "Vulnerability in Aberdeen"
+title: "Deprivation in Aberdeen"
 
 output:
   flexdashboard::flex_dashboard:
