@@ -89,9 +89,8 @@ Row
 ###
 
 ```{r}
-#filter(aberdeen_sf, !(DataZone %in% c("S01006563", "S01006587", "S01006655"))) %>% 
-
 aberdeen_sf %>%
+  select(DataZone, Name, Total_population, SIMD2020v2_Decile, SIMD2020_Health_Domain_Rank) %>%
   mapview(
     map.types = "OpenStreetMap",
     zcol = "SIMD2020_Health_Domain_Rank", 
@@ -135,6 +134,7 @@ Row
 
 ```{r}
 aberdeen_sf %>%
+  select(DataZone, Name, Total_population, SIMD2020v2_Decile,SIMD2020_Housing_Domain_Rank) %>%
   mapview(
     map.types = "OpenStreetMap",
     zcol = "SIMD2020_Housing_Domain_Rank", 
