@@ -67,17 +67,49 @@ aberdeen_sf %>% mutate(pop_per_km2 = TotPop2011/StdAreaKm2)
 ```
 
 
+Areas by Scottish Deprivation Index
+=====================================
+
+Row
+-------------------------------------
+
+###
+
 ```{r}
-# p <-
-#   ggplot(data = aberdeen, aes(SIMD2020v2_Vigintile, LBWT, label = DZname)) +
-#   geom_jitter(aes(color = IZname)) +
-#   geom_smooth(method = "lm") +
-#   #geom_hline(yintercept = 100) +
-#   theme(legend.position = 'none') +
-#   scale_fill_brewer(palette = "PiYG")
-# 
-# ggplotly(p, tooltip = c("label"))
+aberdeen_sf %>%
+  select(DataZone, Name, Total_population, SIMD2020v2_Decile) %>%
+  mapview(
+    map.types = "OpenStreetMap",
+    zcol = "SIMD2020v2_Decile", 
+    label = aberdeen_sf$Name,
+    layer.name = "SIMD decile",
+    alpha.regions = 0.8
+    )
 ```
+
+
+###
+
+```{r}
+#
+
+aberdeen %>%
+  select(Data_Zone, DZname, Total_population, SIMD2020v2_Decile, SIMD2020v2_Rank) %>%
+   filter(SIMD2020v2_Decile < 3) %>%
+   arrange(SIMD2020v2_Rank) %>%
+  gt() %>%
+  tab_header(
+    title = "Areas by Scottish Deprivation Index", 
+    subtitle = "Data zones with SIMD score in the most deprived 20% of Scotland") %>%
+  cols_label(
+    Data_Zone = "Data Zone",
+    DZname = "Name", 
+    Total_population = "Population",
+    SIMD2020v2_Decile = "SIMD Decile",
+    SIMD2020v2_Rank = "Rank in Scotland")  %>%
+  tab_options(container.height = 400)
+```
+
 
 
 Areas with worst health
@@ -107,7 +139,7 @@ aberdeen_sf %>%
 #
 
 aberdeen %>%
-  select(Data_Zone, Intermediate_Zone, Total_population, SIMD2020_Health_Domain_Rank, SIMD2020v2_Decile) %>%
+  select(Data_Zone, DZname, Total_population, SIMD2020_Health_Domain_Rank, SIMD2020v2_Decile) %>%
    filter(SIMD2020_Health_Domain_Rank < 2000) %>%
    arrange(SIMD2020_Health_Domain_Rank) %>%
   gt() %>%
@@ -116,7 +148,7 @@ aberdeen %>%
     subtitle = "Data zones with SIMD Health Domain Rank < 2000") %>%
   cols_label(
     Data_Zone = "Data Zone",
-    Intermediate_Zone = "Area", 
+    DZname = "Area", 
     Total_population = "Population", 
     SIMD2020_Health_Domain_Rank = "Health Rank",
     SIMD2020v2_Decile = "SIMD Decile")  %>%
@@ -151,7 +183,7 @@ aberdeen_sf %>%
 #
 
 aberdeen %>%
-  select(Data_Zone, Intermediate_Zone, Total_population, SIMD2020_Housing_Domain_Rank, SIMD2020v2_Decile) %>%
+  select(Data_Zone, DZname, Total_population, SIMD2020_Housing_Domain_Rank, SIMD2020v2_Decile) %>%
    filter(SIMD2020_Housing_Domain_Rank < 500) %>%
    arrange(SIMD2020_Housing_Domain_Rank) %>%
   gt() %>%
@@ -160,7 +192,7 @@ aberdeen %>%
     subtitle = "Data zones with SIMD Housing Domain Rank < 500") %>%
   cols_label(
     Data_Zone = "Data Zone",
-    Intermediate_Zone = "Area", 
+    DZname = "Area", 
     Total_population = "Population", 
     SIMD2020_Housing_Domain_Rank = "Housing Rank",
     SIMD2020v2_Decile = "SIMD Decile")  %>%
