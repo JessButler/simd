@@ -1,5 +1,5 @@
 ---
-title: "Deprivation in Aberdeen"
+title: "Deprivation in Grampian"
 
 output:
   flexdashboard::flex_dashboard:
@@ -47,8 +47,8 @@ simd %>%
 
 
 ```{r}
-#select Aberdeen City areas' data 
-#join to shapefile
+#select Aberdeen City, Aberdeenshire and Moray's data 
+#join to make separate shapefiles
 
 aberdeen <-
   simd %>%
@@ -59,15 +59,37 @@ aberdeen_data_zones <- pull(aberdeen, Data_Zone)
 aberdeen_sf <- filter(datazone_sf, DataZone %in% aberdeen_data_zones)
 
 aberdeen_sf <-
-  merge(aberdeen_sf, aberdeen, by.x = "DataZone", by.y = "Data_Zone")
+  left_join(aberdeen_sf, aberdeen, by = c("DataZone" = "Data_Zone"))
 
-aberdeen_sf <-
-aberdeen_sf %>% mutate(pop_per_km2 = TotPop2011/StdAreaKm2)
+
+aberdeenshire <-
+  simd %>%
+  filter(Council_area == "Aberdeenshire")
+
+aberdeenshire_data_zones <- pull(aberdeenshire, Data_Zone)
+
+aberdeenshire_sf <- filter(datazone_sf, DataZone %in% aberdeenshire_data_zones)
+
+aberdeenshire_sf <-
+  left_join(aberdeenshire_sf, aberdeenshire, by = c("DataZone" = "Data_Zone"))
+
+
+moray <-
+  simd %>%
+  filter(Council_area == "Moray")
+
+moray_data_zones <- pull(moray, Data_Zone)
+
+moray_sf <- filter(datazone_sf, DataZone %in% moray_data_zones)
+
+moray_sf <-
+  left_join(moray_sf, moray, by = c("DataZone" = "Data_Zone"))
 
 ```
 
 
-Areas by Scottish Deprivation Index
+
+Aberdeen Deprivation Index
 =====================================
 
 Row
@@ -76,6 +98,8 @@ Row
 ###
 
 ```{r}
+pal = viridisLite::viridis(n = 11, direction = -1)
+
 aberdeen_sf %>%
   select(DataZone, Name, Total_population, SIMD2020v2_Decile) %>%
   mapview(
@@ -83,7 +107,8 @@ aberdeen_sf %>%
     zcol = "SIMD2020v2_Decile", 
     label = aberdeen_sf$Name,
     layer.name = "SIMD decile",
-    alpha.regions = 0.8
+    alpha.regions = 0.8,
+    col.regions = pal
     )
 ```
 
@@ -99,7 +124,101 @@ aberdeen %>%
    arrange(SIMD2020v2_Rank) %>%
   gt() %>%
   tab_header(
-    title = "Areas by Scottish Deprivation Index", 
+    title = "Aberdeen areas by Scottish Index of Multiple Deprivation", 
+    subtitle = "Data zones with SIMD score in the most deprived 20% of Scotland") %>%
+  cols_label(
+    Data_Zone = "Data Zone",
+    DZname = "Name", 
+    Total_population = "Population",
+    SIMD2020v2_Decile = "SIMD Decile",
+    SIMD2020v2_Rank = "Rank in Scotland")  %>%
+  tab_options(container.height = 400)
+```
+
+
+Aberdeenshire Deprivation Index
+=====================================
+
+Row
+-------------------------------------
+
+###
+
+```{r}
+pal = viridisLite::viridis(n = 11, direction = -1)
+
+aberdeenshire_sf %>%
+  select(DataZone, Name, Total_population, SIMD2020v2_Decile) %>%
+  mapview(
+    map.types = "OpenStreetMap",
+    zcol = "SIMD2020v2_Decile", 
+    label = aberdeenshire_sf$Name,
+    layer.name = "SIMD decile",
+    alpha.regions = 0.8,
+    col.regions = pal
+    )
+```
+
+
+###
+
+```{r}
+#
+
+aberdeenshire %>%
+  select(Data_Zone, DZname, Total_population, SIMD2020v2_Decile, SIMD2020v2_Rank) %>%
+   filter(SIMD2020v2_Decile < 3) %>%
+   arrange(SIMD2020v2_Rank) %>%
+  gt() %>%
+  tab_header(
+    title = "Aberdeenshire areas by Scottish Index of Multiple Deprivation", 
+    subtitle = "Data zones with SIMD score in the most deprived 20% of Scotland") %>%
+  cols_label(
+    Data_Zone = "Data Zone",
+    DZname = "Name", 
+    Total_population = "Population",
+    SIMD2020v2_Decile = "SIMD Decile",
+    SIMD2020v2_Rank = "Rank in Scotland")  %>%
+  tab_options(container.height = 400)
+```
+
+
+Moray Deprivation Index
+=====================================
+
+Row
+-------------------------------------
+
+###
+
+```{r}
+pal = viridisLite::viridis(n = 11, direction = -1)
+
+moray_sf %>%
+  select(DataZone, Name, Total_population, SIMD2020v2_Decile) %>%
+  mapview(
+    map.types = "OpenStreetMap",
+    zcol = "SIMD2020v2_Decile", 
+    label = moray_sf$Name,
+    layer.name = "SIMD decile",
+    alpha.regions = 0.8,
+    col.regions = pal
+    )
+```
+
+
+###
+
+```{r}
+#
+
+moray %>%
+  select(Data_Zone, DZname, Total_population, SIMD2020v2_Decile, SIMD2020v2_Rank) %>%
+   filter(SIMD2020v2_Decile < 3) %>%
+   arrange(SIMD2020v2_Rank) %>%
+  gt() %>%
+  tab_header(
+    title = "Moray areas by Scottish Index of Multiple Deprivation", 
     subtitle = "Data zones with SIMD score in the most deprived 20% of Scotland") %>%
   cols_label(
     Data_Zone = "Data Zone",
@@ -112,91 +231,74 @@ aberdeen %>%
 
 
 
-Areas with worst health
-=====================================
-
-Row
--------------------------------------
-
-###
-
 ```{r}
-aberdeen_sf %>%
-  select(DataZone, Name, Total_population, SIMD2020v2_Decile, SIMD2020_Health_Domain_Rank) %>%
-  mapview(
-    map.types = "OpenStreetMap",
-    zcol = "SIMD2020_Health_Domain_Rank", 
-    label = aberdeen_sf$Name,
-    layer.name = "SIMD Health Rank",
-    alpha.regions = 0.8
-    )
+# aberdeen_sf %>%
+#   select(DataZone, Name, Total_population, SIMD2020v2_Decile, SIMD2020_Health_Domain_Rank) %>%
+#   mapview(
+#     map.types = "OpenStreetMap",
+#     zcol = "SIMD2020_Health_Domain_Rank", 
+#     label = aberdeen_sf$Name,
+#     layer.name = "SIMD Health Rank",
+#     alpha.regions = 0.8
+#     )
 ```
 
 
-###
 
 ```{r}
-#
-
-aberdeen %>%
-  select(Data_Zone, DZname, Total_population, SIMD2020_Health_Domain_Rank, SIMD2020v2_Decile) %>%
-   filter(SIMD2020_Health_Domain_Rank < 2000) %>%
-   arrange(SIMD2020_Health_Domain_Rank) %>%
-  gt() %>%
-  tab_header(
-    title = "Areas with worst health", 
-    subtitle = "Data zones with SIMD Health Domain Rank < 2000") %>%
-  cols_label(
-    Data_Zone = "Data Zone",
-    DZname = "Area", 
-    Total_population = "Population", 
-    SIMD2020_Health_Domain_Rank = "Health Rank",
-    SIMD2020v2_Decile = "SIMD Decile")  %>%
-  tab_options(container.height = 400)
+# #
+# 
+# aberdeen %>%
+#   select(Data_Zone, DZname, Total_population, SIMD2020_Health_Domain_Rank, SIMD2020v2_Decile) %>%
+#    filter(SIMD2020_Health_Domain_Rank < 2000) %>%
+#    arrange(SIMD2020_Health_Domain_Rank) %>%
+#   gt() %>%
+#   tab_header(
+#     title = "Areas with worst health", 
+#     subtitle = "Data zones with SIMD Health Domain Rank < 2000") %>%
+#   cols_label(
+#     Data_Zone = "Data Zone",
+#     DZname = "Area", 
+#     Total_population = "Population", 
+#     SIMD2020_Health_Domain_Rank = "Health Rank",
+#     SIMD2020v2_Decile = "SIMD Decile")  %>%
+#   tab_options(container.height = 400)
 ```
 
 
-Areas with worst housing
-=====================================
-
-Row
--------------------------------------
-
-###
 
 ```{r}
-aberdeen_sf %>%
-  select(DataZone, Name, Total_population, SIMD2020v2_Decile,SIMD2020_Housing_Domain_Rank) %>%
-  mapview(
-    map.types = "OpenStreetMap",
-    zcol = "SIMD2020_Housing_Domain_Rank", 
-    label = aberdeen_sf$Name,
-    layer.name = "SIMD Housing Rank",
-    alpha.regions = 0.8
-    )
+# aberdeen_sf %>%
+#   select(DataZone, Name, Total_population, SIMD2020v2_Decile,SIMD2020_Housing_Domain_Rank) %>%
+#   mapview(
+#     map.types = "OpenStreetMap",
+#     zcol = "SIMD2020_Housing_Domain_Rank", 
+#     label = aberdeen_sf$Name,
+#     layer.name = "SIMD Housing Rank",
+#     alpha.regions = 0.8
+#     )
 ```
 
 
-###
 
 ```{r}
-#
-
-aberdeen %>%
-  select(Data_Zone, DZname, Total_population, SIMD2020_Housing_Domain_Rank, SIMD2020v2_Decile) %>%
-   filter(SIMD2020_Housing_Domain_Rank < 500) %>%
-   arrange(SIMD2020_Housing_Domain_Rank) %>%
-  gt() %>%
-  tab_header(
-    title = "Areas with worst housing", 
-    subtitle = "Data zones with SIMD Housing Domain Rank < 500") %>%
-  cols_label(
-    Data_Zone = "Data Zone",
-    DZname = "Area", 
-    Total_population = "Population", 
-    SIMD2020_Housing_Domain_Rank = "Housing Rank",
-    SIMD2020v2_Decile = "SIMD Decile")  %>%
-  tab_options(container.height = 400)
+# #
+# 
+# aberdeen %>%
+#   select(Data_Zone, DZname, Total_population, SIMD2020_Housing_Domain_Rank, SIMD2020v2_Decile) %>%
+#    filter(SIMD2020_Housing_Domain_Rank < 500) %>%
+#    arrange(SIMD2020_Housing_Domain_Rank) %>%
+#   gt() %>%
+#   tab_header(
+#     title = "Areas with worst housing", 
+#     subtitle = "Data zones with SIMD Housing Domain Rank < 500") %>%
+#   cols_label(
+#     Data_Zone = "Data Zone",
+#     DZname = "Area", 
+#     Total_population = "Population", 
+#     SIMD2020_Housing_Domain_Rank = "Housing Rank",
+#     SIMD2020v2_Decile = "SIMD Decile")  %>%
+#   tab_options(container.height = 400)
 ```
 
 
@@ -208,18 +310,22 @@ Row
 -------------------------------------
 ###
 
-Scottish Index of Multiple Deprivation 2020
+Scottish Index of Multiple Deprivation 2020 background
 https://www.gov.scot/collections/scottish-index-of-multiple-deprivation-2020/
 
 Scottish Index of Multiple Deprivation 2020 technical notes
 https://www2.gov.scot/resource/0050/00504822.pdf
 
-Data from 
-https://www.gov.scot/publications/scottish-index-of-multiple-deprivation-2020v2-indicator-data/
-https://www.gov.scot/publications/scottish-index-of-multiple-deprivation-2020v2-data-zone-look-up/
+Data on all 40 indicators used in SIMD 
+https://www.gov.scot/publications/scottish-index-of-multiple-deprivation-2020v2-indicator-data/ 
+
+Data on datazone names and areas 
+https://www.gov.scot/publications/scottish-index-of-multiple-deprivation-2020v2-data-zone-look-up/ 
 
 Map shapefiles from https://data.gov.uk/dataset/ab9f1f20-3b7f-4efa-9bd2-239acf63b540/data-zone-boundaries-2011
 
-Code at https://github.com/JessButler/simd
+Code at https://github.com/JessButler/simd 
+
+Contact <JessicaButler@abdn.ac.uk>
 
 
